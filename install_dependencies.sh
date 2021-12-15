@@ -12,5 +12,6 @@ apt-get update && apt-get install -y \
 	colmap \
 	libceres-dev \
 	wget
-	
+
+# A specific version of pytorch for compatibility with nvidia 3090	
 pip3 install -r $SCRIPT_DIR/requirements.txt -f https://download.pytorch.org/whl/torch_stable.html

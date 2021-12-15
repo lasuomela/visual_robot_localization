@@ -40,3 +40,5 @@ RUN /bin/bash -c "python3 setup.py install"
 WORKDIR /opt/visual_robot_localization/
 RUN /bin/bash -c "source /opt/ros/${ROS_DISTRO}/setup.bash; \
 		  colcon build" 
+		  
+COPY ./docker/content/ros_entrypoint.sh /
