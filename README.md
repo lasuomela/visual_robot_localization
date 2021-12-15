@@ -31,7 +31,7 @@ To build the ros package, run
 colcon build
 ```
 
-inside the '/opt/visual_robot_localization' directory.
+inside the `/opt/visual_robot_localization` directory.
 
 Now, navigate to `/opt/visual_robot_localization/src/visual_robot_localization/utils` and run
 
