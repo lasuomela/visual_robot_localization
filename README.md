@@ -57,7 +57,7 @@ After running the 3D reconstruction, you can launch the visual localizer with
 ros2 launch visual_robot_localization visual_pose_estimator.launch.py compensate_sensor_offset:=False
 ```
 
-If 'compensate_sensor_offset' is set to True, the node will wait to acquire a coordinate transform between the camera and robot base from tf2. Since tf2 isn't running, the parameter is set to False.
+If `compensate_sensor_offset` is set to True, the node will wait to acquire a coordinate transform between the camera and robot base from tf2. Since tf2 isn't running, the parameter is set to False.
 
 To test that the node can succesfully receive and process images, navigate to `/opt/visual_robot_localization/src/visual_robot_localization/test` and run 
 
