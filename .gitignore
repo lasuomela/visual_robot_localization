@@ -1,3 +1,9 @@
+
+#ROS colcon build folders
+*build/*
+*install/*
+*log/*
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

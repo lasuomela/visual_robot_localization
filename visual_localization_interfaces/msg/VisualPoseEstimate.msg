@@ -1,0 +1,3 @@
+std_msgs/Header header
+geometry_msgs/Pose[] place_recognition_poses
+visual_localization_interfaces/PnpPoseEstimate[] pnp_estimates

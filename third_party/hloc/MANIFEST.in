@@ -1,0 +1,2 @@
+include Hierarchical-Localization/third_party/SuperGluePretrainedNetwork/models/weights/*.pth
+include Hierarchical-Localization/third_party/r2d2/models/*.pt
