@@ -10,14 +10,11 @@ from nav_msgs.msg import Odometry
 from visual_localization_interfaces.msg import VisualPoseEstimate
 
 import cv2
-import numpy as np
-import transforms3d as t3d
-import threading
 from copy import deepcopy
 import threading
 
 from visual_robot_localization.visual_6dof_localize import VisualPoseEstimator
-from visual_robot_localization.coordinate_transforms import colmap2ros_coord_transform, SensorOffsetCompensator
+from visual_robot_localization.coordinate_transforms import SensorOffsetCompensator
 
 
 class VisualLocalizer(Node):
@@ -66,6 +63,9 @@ class VisualLocalizer(Node):
         self.declare_parameter("sensor_frame", "ego_vehicle/rgb_front")
         sensor_frame = self.get_parameter('sensor_frame').get_parameter_value().string_value
 
+        self.declare_parameter("align_camera_frame", True)
+        align_camera_frame = self.get_parameter('align_camera_frame').get_parameter_value().bool_value
+
         self.declare_parameter("ransac_thresh", 12)
         ransac_thresh = self.get_parameter('ransac_thresh').get_parameter_value().integer_value
 
@@ -94,7 +94,7 @@ class VisualLocalizer(Node):
 
         if self.compensate_sensor_offset:
             self.get_logger().info('Constructing sensor offset compensator...')
-            self.sensor_offset_compensator = SensorOffsetCompensator(base_frame, sensor_frame, True)
+            self.sensor_offset_compensator = SensorOffsetCompensator(base_frame, sensor_frame, align_camera_frame)
 
     def camera_subscriber_callback(self, image_msg):
         '''
