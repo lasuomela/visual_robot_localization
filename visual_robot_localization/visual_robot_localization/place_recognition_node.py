@@ -54,20 +54,6 @@ class PlaceRecognizer(Node):
         self.publisher = self.create_publisher(KBestPRMatches, pose_publish_topic, 10)
 
         extractor_confs = hloc.extract_features.confs.copy()
-        # Manually add r2d2 extractor configuration since the hloc pr hasn't been merged yet
-        # https://github.com/cvg/Hierarchical-Localization/pull/85/commits
-        extractor_confs['r2d2'] = {
-            'output': 'feats-r2d2-n5000-r1024',
-            'model':{
-                'name': 'r2d2',
-                'max_keypoints': 5000,
-            },
-            'preprocessing': {
-                'grayscale': False,
-                'resize_max': 1024,
-            },
-        }
-
         extractor = FeatureExtractor(extractor_confs[extractor_conf])
 
         self.pr_querier = PlaceRecognitionQuerier(extractor, gallery_db_path, image_gallery_path)      

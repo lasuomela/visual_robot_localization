@@ -4,8 +4,8 @@ import os
 import shutil
 import torch
 
-from hloc import extract_features, match_features, pairs_from_covisibility
-from hloc import colmap_from_nvm, triangulation, localize_sfm, visualization
+from hloc import extract_features, match_features
+from hloc import triangulation
 
 from visual_robot_localization.gallery_db import HlocPlaceRecognitionDBHandler
 from colmap_poses_from_odometry import create_empty_colmap
@@ -58,20 +58,6 @@ def main(img_dir,
 
     extractor_confs = extract_features.confs.copy()
     matcher_confs = match_features.confs.copy()
-
-    # Manually add r2d2 extractor configuration since the hloc pr hasn't been merged yet
-    # https://github.com/cvg/Hierarchical-Localization/pull/85/commits
-    extractor_confs['r2d2'] = {
-        'output': 'feats-r2d2-n5000-r1024',
-        'model':{
-            'name': 'r2d2',
-            'max_keypoints': 5000,
-        },
-        'preprocessing': {
-            'grayscale': False,
-            'resize_max': 1024,
-        },
-    }
 
     assert (global_extractor_name in extractor_confs), global_extractor_name
     assert (local_extractor_name in extractor_confs), local_extractor_name

@@ -25,20 +25,6 @@ def main(test_img1_name, test_img2_name, test_img_dir, use_superglue, create_vis
     img_types = ['.png', '.jpg', '.jpeg']
     extractor_confs = hloc.extract_features.confs.copy()
 
-    # Manually add r2d2 extractor configuration since the hloc pr hasn't been merged yet
-    # https://github.com/cvg/Hierarchical-Localization/pull/85/commits
-    extractor_confs['r2d2'] = {
-        'output': 'feats-r2d2-n5000-r1024',
-        'model':{
-            'name': 'r2d2',
-            'max_keypoints': 5000,
-        },
-        'preprocessing': {
-            'grayscale': False,
-            'resize_max': 1024,
-        },
-    }
-
     # List all the images in the main folder
     img_list = []
     for img_type in img_types:
