@@ -83,3 +83,8 @@ Interface description
 ## Extending
 
 Under the hood, the package utilizes the [hloc toolbox](https://github.com/cvg/Hierarchical-Localization) for integrating visual localization methods, batch feature extraction and scene reconstruction. New visual localization methods can be added by contributing to the hloc package.
+
+## TODO
+
+- [ ] Enable running scene reconstruction with full SfM with unkown camera poses
+- [ ] Improve test coverage
