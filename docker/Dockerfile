@@ -1,6 +1,7 @@
 ARG ROS_DISTRO
+ARG BASE_IMAGE
 FROM nvidia/cuda:11.2.0-cudnn8-devel-ubuntu20.04 as cuda
-FROM ros:$ROS_DISTRO-ros-base
+FROM $BASE_IMAGE
 
 # Add cuda&cudnn libraries
 COPY --from=cuda /usr/local/cuda /usr/local/cuda
