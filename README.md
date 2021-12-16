@@ -2,6 +2,10 @@
 
 A ROS2 package for hierarchical visual localization.
 
+<p align="center">
+  <img src="doc/vloc_scheme.png" width="60%"/></a>
+  <br /><em>An agent running ROS2 can acquire its 6DoF pose using hierarchical visual localization</em>
+</p>
 
 ## Install
 
@@ -48,10 +52,10 @@ ros2 launch visual_robot_localization visual_pose_estimator.launch.py compensate
 
 If `compensate_sensor_offset` is set to True, the node will wait to acquire a coordinate transform between the camera and robot base from tf2. Since tf2 isn't running, the parameter is set to False.
 
-To test that the node can succesfully receive and process images, navigate to `/opt/visual_robot_localization/src/visual_robot_localization/test` and run 
+To test that the node can succesfully receive and process images, run 
 
 ```sh
-launch_testing visual_pose_estimator_test.launch.py
+launch_testing /opt/visual_robot_localization/src/visual_robot_localization/test/visual_pose_estimator_test.launch.py
 ```
 
 The test sends the visual pose estimator node one image from `example_dir` which the node localizes against the 3D model built by `do_SfM.sh`. If the localization is successful, the test will give an OK and show one visual pose estimate ROS message 
@@ -79,3 +83,8 @@ Interface description
 ## Extending
 
 Under the hood, the package utilizes the [hloc toolbox](https://github.com/cvg/Hierarchical-Localization) for integrating visual localization methods, batch feature extraction and scene reconstruction. New visual localization methods can be added by contributing to the hloc package.
+
+## TODO
+
+- [ ] Enable running scene reconstruction with full SfM with unkown camera poses
+- [ ] Improve test coverage
