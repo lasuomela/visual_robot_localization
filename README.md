@@ -2,6 +2,10 @@
 
 A ROS2 package for hierarchical visual localization.
 
+<p align="center">
+  <img src="doc/vloc_scheme.png" width="60%"/></a>
+  <br /><em>An agent running ROS2 can acquire its 6DoF pose using hierarchical visual localization</em>
+</p>
 
 ## Install
 
