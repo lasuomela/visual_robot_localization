@@ -1,6 +1,6 @@
 # visual_robot_localization
 
-A ROS2 package for running hierarchical visual localization on robotic systems.
+A ROS2 package for hierarchical visual localization.
 
 ## Install
 
