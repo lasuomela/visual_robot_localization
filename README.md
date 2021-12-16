@@ -1,4 +1,4 @@
-# visual_robot_localization
+# Visual robot localization
 
 A ROS2 package for hierarchical visual localization.
 
