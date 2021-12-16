@@ -4,7 +4,7 @@ A ROS2 package for hierarchical visual localization.
 
 ## Install
 
-Clone the repository, and in the repository run
+Pull the repository:
 
 ```sh
 git clone https://github.com/lasuomela/visual_robot_localization/
