@@ -1,12 +1,4 @@
-import h5py
-import argparse
-import glob
-import json
-import re
 import numpy as np
-import cv2
-from distutils.util import strtobool
-from pathlib import Path
 
 from visual_robot_localization.gallery_db import HlocPlaceRecognitionDBHandler
 
@@ -25,7 +17,11 @@ class PlaceRecognitionQuerier:
         diff = self.db_handler.get_descriptors()-query_ret['global_descriptor'].numpy()
         dist = np.linalg.norm(diff, axis=1)
 
-        idx_part = np.argpartition(dist, k)[:(k)]
+        if k < len(dist):
+            idx_part = np.argpartition(dist, k)[:(k)]
+        else:
+            idx_part = np.arange(k)
+
         idx_partsort = np.argsort(dist[idx_part])
         idx_ksmallest = idx_part[idx_partsort]
 

@@ -3,6 +3,8 @@ import torch
 import cv2
 import numpy as np
 
+from torch.nn.utils.rnn import pad_sequence
+
 from hloc import extractors, matchers
 from hloc.utils.base_model import dynamic_load
 
@@ -86,21 +88,32 @@ class FeatureMatcher:
             self.model.eval()
         self.model = self.model.to(self.device)
 
-    def prepare_data(self, desc1, desc2, img_shape):
+    def prepare_data(self, query_feature, gallery_features, img_shape):
+
         data = {}
-        data['descriptors0'] = desc1['descriptors'].unsqueeze(0).to(self.device) ## FIX THE DEVICE TRANSFERS
-        data['descriptors1'] = desc2['descriptors'].unsqueeze(0).to(self.device)
-        data['keypoints0'] = desc1['keypoints']
-        data['keypoints1'] = desc2['keypoints']
-        data['scores0'] = desc1['scores'].unsqueeze(0)
-        data['scores1'] = desc2['scores'].unsqueeze(0)
-        data['image0'] = torch.empty((1, 1, img_shape[0], img_shape[1]))
-        data['image1'] = torch.empty((1, 1, img_shape[0], img_shape[1]))
+
+        gallery_descriptors = [ desc['descriptors'].transpose(0,1) for desc in gallery_features ]
+        gallery_keypoints = [ desc['keypoints'] for desc in gallery_features ]
+        gallery_scores = [ desc['scores'] for desc in gallery_features ]
+
+        # Zero-pad the gallery descriptors/keypoints/scores according to the feature with most keypoints
+        data['descriptors1'] = pad_sequence(gallery_descriptors, batch_first=True).transpose(1,2)
+        data['keypoints1'] = pad_sequence(gallery_keypoints, batch_first=True)
+        data['scores1'] = pad_sequence(gallery_scores, batch_first=True)
+        batch_size = data['descriptors1'].shape[0]
+
+        # Repeate query descriptor N times in batch dimension to match number of gallery descriptors
+        data['descriptors0'] = query_feature['descriptors'].unsqueeze(0).repeat( batch_size, 1, 1)
+        data['keypoints0'] = query_feature['keypoints'].unsqueeze(0).repeat( batch_size, 1, 1)
+        data['scores0'] = query_feature['scores'].unsqueeze(0).repeat(batch_size,1)
+        data['image0'] = torch.empty((batch_size, 1, img_shape[0], img_shape[1]))
+        data['image1'] = torch.empty((batch_size, 1, img_shape[0], img_shape[1]))
         return data
+
 
     @torch.no_grad()
     def __call__(self, data):
         pred = self.model(data)
-        matches = pred['matches0'][0].cpu().short().numpy()
-        scores = pred['matching_scores0'][0].cpu().half().numpy()
+        matches = pred['matches0'].cpu().short().numpy()
+        scores = pred['matching_scores0'].cpu().half().numpy()
         return matches, scores

@@ -15,7 +15,6 @@ from collections import defaultdict
 from pathlib import Path
 from ast import literal_eval
 
-
 class VisualPoseEstimator:
 
     def __init__(self,
@@ -91,14 +90,12 @@ class VisualPoseEstimator:
         # Extract the local descriptors for the query image
         query_local_descriptors = self.local_extractor(query_img)
 
-        gallery_matches = [] 
+        gallery_matches = None
         # At least 2 feature descriptors needed to attempt feature matching
         if query_local_descriptors['descriptors'].size(dim=-1) > 1: 
-            for gallery_local_descriptor in topk_gallery_images_local_descriptors:
-                    # The order of the descriptors matters! Query first.
-                    data = self.local_matcher.prepare_data(query_local_descriptors, gallery_local_descriptor, query_img.shape[0:2])
-                    matches, scores = self.local_matcher(data)
-                    gallery_matches.append(matches)
+            # The order of the descriptors matters! Query first.
+            data = self.local_matcher.prepare_data(query_local_descriptors, topk_gallery_images_local_descriptors, query_img.shape[0:2])
+            gallery_matches, _ = self.local_matcher(data)
 
         if covisibility_clustering:
             # Logic to partition the top k gallery images into distinct clusters by feature covisibility
@@ -121,9 +118,9 @@ class VisualPoseEstimator:
 
         for cluster_ids in clusters:
 
-            if gallery_matches:
+            if gallery_matches is not None:
                 cluster_idx = [ db_ids.index(id) for id in cluster_ids ]
-                cluster_matches = [gallery_matches[idx] for idx in cluster_idx]
+                cluster_matches = [gallery_matches[idx, :] for idx in cluster_idx]
                 # PnP to estimate the 6DoF location of the query image
                 ret = self._pose_from_cluster_online(cluster_ids, cluster_matches, query_local_descriptors)
             else:
@@ -138,6 +135,7 @@ class VisualPoseEstimator:
             estimates['pnp_estimates'].append(ret)
 
         return estimates
+        
 
     def _pose_from_cluster_online(self, db_ids, query_matches, query_local_descriptors):
 

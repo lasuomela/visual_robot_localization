@@ -56,16 +56,16 @@ def generate_test_description():
                     'local_matcher_name': 'superglue'
                 },
                 {
-                    'gallery_global_descriptor_path': path_to_test + '/example_dir/outputs/netvlad+superpoint_aachen+superglue/global-feats-netvlad.h5'
+                    'gallery_global_descriptor_path': path_to_test + '/example_dir/outputs/netvlad+superpoint_aachen+superglue/global-feats-netvlad.h5' # '/example_dir/outputs/dir+superpoint_aachen+superglue/global-feats-dir.h5' #
                 },
                 {
-                    'gallery_local_descriptor_path': path_to_test + '/example_dir/outputs/netvlad+superpoint_aachen+superglue/feats-superpoint-n4096-r1024.h5'
+                    'gallery_local_descriptor_path': path_to_test + '/example_dir/outputs/netvlad+superpoint_aachen+superglue/feats-superpoint-n4096-r1024.h5' # '/example_dir/outputs/dir+superpoint_aachen+superglue/feats-superpoint-n4096-r1024.h5' 
                 },
                 {
                     'image_gallery_path':  path_to_test + '/example_dir/'
                 },
                 {
-                    'gallery_sfm_path': path_to_test + '/example_dir/outputs/netvlad+superpoint_aachen+superglue/sfm_netvlad+superpoint_aachen+superglue'
+                    'gallery_sfm_path': path_to_test + '/example_dir/outputs/netvlad+superpoint_aachen+superglue/sfm_netvlad+superpoint_aachen+superglue' # '/example_dir/outputs/dir+superpoint_aachen+superglue/sfm_dir+superpoint_aachen+superglue' 
                 },
                 {
                     'compensate_sensor_offset': False
