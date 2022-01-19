@@ -4,8 +4,7 @@ from rclpy.executors import SingleThreadedExecutor
 from cv_bridge import CvBridge
 from rosidl_runtime_py.set_message import set_message_fields
 from sensor_msgs.msg import Image
-from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
-from nav_msgs.msg import Odometry
+from geometry_msgs.msg import Point, Quaternion
 
 from visual_localization_interfaces.msg import VisualPoseEstimate
 
@@ -15,7 +14,6 @@ import threading
 
 from visual_robot_localization.visual_6dof_localize import VisualPoseEstimator
 from visual_robot_localization.coordinate_transforms import SensorOffsetCompensator
-
 
 class VisualLocalizer(Node):
     def __init__(self):
