@@ -8,6 +8,7 @@ from sensor_msgs.msg import Image
 from geometry_msgs.msg import Pose, Point, Quaternion, PoseArray, PoseWithCovariance, Vector3
 from visualization_msgs.msg import Marker
 
+
 from visual_localization_interfaces.msg import VisualPoseEstimate
 
 import cv2
@@ -18,7 +19,6 @@ from matplotlib import cm
 
 from visual_robot_localization.visual_6dof_localize import VisualPoseEstimator
 from visual_robot_localization.coordinate_transforms import SensorOffsetCompensator
-
 
 class VisualLocalizer(Node):
     def __init__(self):

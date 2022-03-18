@@ -6,6 +6,7 @@ import json
 import cv2
 import os
 import numpy as np
+import time
 
 def main():
 
@@ -21,7 +22,12 @@ def main():
     gallery_global_descriptor_path = script_dir+'/example_dir/outputs/netvlad+superpoint_aachen+superglue/global-feats-netvlad.h5'
     gallery_local_descriptor_path = script_dir+'/example_dir/outputs/netvlad+superpoint_aachen+superglue/feats-superpoint-n4096-r1024.h5'
     reference_sfm_path = script_dir+'/example_dir/outputs/netvlad+superpoint_aachen+superglue/sfm_netvlad+superpoint_aachen+superglue'
-    topk = 4
+
+    # gallery_global_descriptor_path = script_dir+'/example_dir/outputs/dir+superpoint_aachen+superglue/global-feats-dir.h5'
+    # gallery_local_descriptor_path = script_dir+'/example_dir/outputs/dir+superpoint_aachen+superglue/feats-superpoint-n4096-r1024.h5'
+    # reference_sfm_path = script_dir+'/example_dir/outputs/dir+superpoint_aachen+superglue/sfm_dir+superpoint_aachen+superglue'
+
+    topk = 5
 
     image_types = ['.png', '.jpg', '.jpeg']
     odometry_suffix = '_odometry_camera.json'
@@ -39,7 +45,10 @@ def main():
                                     12)
 
     # Exclude the best match which is the query image itself
-    ret = estimator.estimate_pose(query_img, topk, exclude_best_match=True)
+    for i in range(5):
+        start = time.time()
+        ret = estimator.estimate_pose(query_img, topk, exclude_best_match=True)
+        print('{:.3f}s'.format(time.time()-start))
 
     # Choose the pose estimate based on the number of ransac inliers
     best_inliers = 0

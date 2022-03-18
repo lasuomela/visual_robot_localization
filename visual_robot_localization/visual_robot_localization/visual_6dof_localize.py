@@ -15,7 +15,6 @@ from collections import defaultdict
 from pathlib import Path
 from ast import literal_eval
 
-
 class VisualPoseEstimator:
 
     def __init__(self,
@@ -91,14 +90,12 @@ class VisualPoseEstimator:
         # Extract the local descriptors for the query image
         query_local_descriptors = self.local_extractor(query_img)
 
-        gallery_matches = [] 
+        gallery_matches = None
         # At least 2 feature descriptors needed to attempt feature matching
         if query_local_descriptors['descriptors'].size(dim=-1) > 1: 
-            for gallery_local_descriptor in topk_gallery_images_local_descriptors:
-                    # The order of the descriptors matters! Query first.
-                    data = self.local_matcher.prepare_data(query_local_descriptors, gallery_local_descriptor, query_img.shape[0:2])
-                    matches, scores = self.local_matcher(data)
-                    gallery_matches.append(matches)
+            # The order of the descriptors matters! Query first.
+            data = self.local_matcher.prepare_data(query_local_descriptors, topk_gallery_images_local_descriptors, query_img.shape[0:2])
+            gallery_matches, _ = self.local_matcher(data)
 
         if covisibility_clustering:
             # Logic to partition the top k gallery images into distinct clusters by feature covisibility
@@ -137,34 +134,6 @@ class VisualPoseEstimator:
             estimates['pnp_estimates'].append(ret)
 
         return estimates
-
-
-    def _visualize_estimates(self, ret, best_pose_idx):
-        # Place recognition & PnP localization visualizations
-
-        header = Header(frame_id='map', stamp='')
-        marker = Marker(header=odometry_msg.header, scale=Vector3(x=1.0,y=1.0,z=1.0), type=8, action=0, color=ColorRGBA(r=0.0, g=1.0, b=0.0, a=1.0))
-        poses = PoseArray(header=odometry_msg.header, poses=[])
-        for i, estimate in enumerate(ret['pnp_estimates']):
-            if i == best_pose_idx:
-                color = self.colormap(0)
-            else:
-                color = self.colormap(i+1)
-            color = ColorRGBA(r=color[0], g=color[1], b=color[2], a=color[3])
-
-            place_recognition_idxs = estimate['place_recognition_idx']
-            for idx in place_recognition_idxs:
-                marker.colors.append(color)
-
-                place_reg_position = ret['place_recognition'][idx]['tvec']
-                marker.points.append(place_reg_position)
-
-            if estimate.success.data == True:
-                poses.poses.append(estimate.pose)
-
-        self.place_recognition_publisher.publish(marker)
-        self.pnp_estimate_publisher.publish(poses)
-        self.true_pose_publisher.publish(PoseStamped(header = odometry_msg.header, pose=odometry_msg.pose.pose))
 
     def _pose_from_cluster_online(self, db_ids, query_matches, query_local_descriptors):
 

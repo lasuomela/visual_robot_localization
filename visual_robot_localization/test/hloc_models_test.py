@@ -5,6 +5,7 @@ import cv2
 import matplotlib.cm as cm
 from pathlib import Path
 import numpy as np
+import time
 
 import hloc.extract_features
 import hloc.match_features
@@ -62,6 +63,11 @@ def main(test_img1_name, test_img2_name, test_img_dir, use_superglue, create_vis
                 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)                    
                 single_descriptor = extractor(img)
 
+                start = time.time()
+                for i in range(10):
+                    extractor(img)
+                print('Feature extraction: {:.3f} s/cycle'.format((time.time()-start)/10))
+
             if 'descriptors' in single_descriptor:
                 single_descriptor = single_descriptor['descriptors'].cpu().numpy()
             elif 'global_descriptor' in single_descriptor:
@@ -116,18 +122,19 @@ def main(test_img1_name, test_img2_name, test_img_dir, use_superglue, create_vis
             if ('grayscale' in extractor_conf['preprocessing']) & (extractor_conf['preprocessing']['grayscale']):
                 # Read images in grayscale to see if features match exactly
                 img1 = cv2.imread(str(test_img_dir / test_img1_name), cv2.IMREAD_GRAYSCALE)
-                res1 = extractor.extract(img1, disable_grayscale = True)
+                res1 = extractor(img1, disable_grayscale = True)
 
                 img2 = cv2.imread(str(test_img_dir / test_img2_name), cv2.IMREAD_GRAYSCALE)
-                res2 = extractor.extract(img2, disable_grayscale = True)
+                res2 = [extractor(img2, disable_grayscale = True)]
+
             else:
                 img1 = cv2.imread(str(test_img_dir / test_img1_name), cv2.IMREAD_COLOR)
                 img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2RGB)                    
-                res1 = extractor.extract(img1)
+                res1 = extractor(img1)
 
                 img2 = cv2.imread(str(test_img_dir / test_img2_name), cv2.IMREAD_COLOR)
                 img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2RGB)                    
-                res2 = extractor.extract(img2)
+                res2 = [extractor(img2)]
 
             if 'keypoints' in res1:
                 visualize_keypoint_matches(key, extractor_conf, res1, res2, img1, img2, use_superglue, output_dir)
@@ -150,9 +157,10 @@ def visualize_keypoint_matches(key, extractor_conf, desc1, desc2, img1, img2, us
     data = matcher.prepare_data(desc1, desc2, img1.shape)
     matches, scores = matcher(data)
     
-    kpts0 = data['keypoints0'].cpu().numpy()
-    kpts1 = data['keypoints1'].cpu().numpy()
-    conf=scores
+    kpts0 = np.squeeze(data['keypoints0'].cpu().numpy())
+    kpts1 = np.squeeze(data['keypoints1'].cpu().numpy())
+    conf=np.squeeze(scores)
+    matches = np.squeeze(matches)
 
     valid = matches > -1
     mkpts0 = kpts0[valid]
