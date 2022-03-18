@@ -118,8 +118,8 @@ class VisualPoseEstimator:
 
         for cluster_ids in clusters:
             cluster_idx = [ db_ids.index(id) for id in cluster_ids ]
-            if gallery_matches:
-                cluster_matches = [gallery_matches[idx] for idx in cluster_idx]
+            if gallery_matches is not None:
+                cluster_matches = [gallery_matches[idx,:] for idx in cluster_idx]
                 # PnP to estimate the 6DoF location of the query image
                 ret = self._pose_from_cluster_online(cluster_ids, cluster_matches, query_local_descriptors)
             else:
