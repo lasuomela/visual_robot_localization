@@ -1,3 +1,4 @@
 std_msgs/Header header
-geometry_msgs/Pose[] place_recognition_poses
-visual_localization_interfaces/PnpPoseEstimate[] pnp_estimates
+std_msgs/Bool pnp_success
+builtin_interfaces/Duration computation_delay
+geometry_msgs/PoseWithCovariance pose

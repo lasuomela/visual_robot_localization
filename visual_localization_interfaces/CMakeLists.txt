@@ -26,7 +26,6 @@ find_package(std_msgs REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
     "msg/KBestPRMatches.msg"
     "msg/VisualPoseEstimate.msg"
-    "msg/PnpPoseEstimate.msg"
     DEPENDENCIES geometry_msgs std_msgs
     )
 

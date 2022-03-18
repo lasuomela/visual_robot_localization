@@ -120,9 +120,8 @@ class VisualPoseEstimator:
             } for pose in topk_gallery_poses]
 
         for cluster_ids in clusters:
-
+            cluster_idx = [ db_ids.index(id) for id in cluster_ids ]
             if gallery_matches:
-                cluster_idx = [ db_ids.index(id) for id in cluster_ids ]
                 cluster_matches = [gallery_matches[idx] for idx in cluster_idx]
                 # PnP to estimate the 6DoF location of the query image
                 ret = self._pose_from_cluster_online(cluster_ids, cluster_matches, query_local_descriptors)
@@ -138,6 +137,34 @@ class VisualPoseEstimator:
             estimates['pnp_estimates'].append(ret)
 
         return estimates
+
+
+    def _visualize_estimates(self, ret, best_pose_idx):
+        # Place recognition & PnP localization visualizations
+
+        header = Header(frame_id='map', stamp='')
+        marker = Marker(header=odometry_msg.header, scale=Vector3(x=1.0,y=1.0,z=1.0), type=8, action=0, color=ColorRGBA(r=0.0, g=1.0, b=0.0, a=1.0))
+        poses = PoseArray(header=odometry_msg.header, poses=[])
+        for i, estimate in enumerate(ret['pnp_estimates']):
+            if i == best_pose_idx:
+                color = self.colormap(0)
+            else:
+                color = self.colormap(i+1)
+            color = ColorRGBA(r=color[0], g=color[1], b=color[2], a=color[3])
+
+            place_recognition_idxs = estimate['place_recognition_idx']
+            for idx in place_recognition_idxs:
+                marker.colors.append(color)
+
+                place_reg_position = ret['place_recognition'][idx]['tvec']
+                marker.points.append(place_reg_position)
+
+            if estimate.success.data == True:
+                poses.poses.append(estimate.pose)
+
+        self.place_recognition_publisher.publish(marker)
+        self.pnp_estimate_publisher.publish(poses)
+        self.true_pose_publisher.publish(PoseStamped(header = odometry_msg.header, pose=odometry_msg.pose.pose))
 
     def _pose_from_cluster_online(self, db_ids, query_matches, query_local_descriptors):
 

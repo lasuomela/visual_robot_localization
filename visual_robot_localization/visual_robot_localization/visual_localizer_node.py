@@ -2,16 +2,19 @@ import rclpy
 from rclpy.node import Node
 from rclpy.executors import SingleThreadedExecutor
 from cv_bridge import CvBridge
-from rosidl_runtime_py.set_message import set_message_fields
+
+from std_msgs.msg import ColorRGBA, Header, Bool
 from sensor_msgs.msg import Image
-from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
-from nav_msgs.msg import Odometry
+from geometry_msgs.msg import Pose, Point, Quaternion, PoseArray, PoseWithCovariance, Vector3
+from visualization_msgs.msg import Marker
 
 from visual_localization_interfaces.msg import VisualPoseEstimate
 
 import cv2
 from copy import deepcopy
 import threading
+import numpy as np
+from matplotlib import cm
 
 from visual_robot_localization.visual_6dof_localize import VisualPoseEstimator
 from visual_robot_localization.coordinate_transforms import SensorOffsetCompensator
@@ -69,7 +72,19 @@ class VisualLocalizer(Node):
         self.declare_parameter("ransac_thresh", 12)
         ransac_thresh = self.get_parameter('ransac_thresh').get_parameter_value().integer_value
 
-        self.publisher = self.create_publisher(VisualPoseEstimate, pose_publish_topic, 10)
+        self.declare_parameter("visualize_estimates", False)
+        self.visualize_estimates = self.get_parameter('visualize_estimates').get_parameter_value().bool_value
+
+        self.vloc_publisher = self.create_publisher(
+            VisualPoseEstimate,
+            pose_publish_topic,
+            10)
+
+        # Visualization publishers
+        if self.visualize_estimates:
+            self.place_recognition_publisher = self.create_publisher(Marker, '/place_recognition_visualization', 10)
+            self.pnp_estimate_publisher = self.create_publisher(PoseArray, '/visual_pose_estimate_visualization', 10)
+            self.colormap = cm.get_cmap('Accent')
 
         self.subscription = self.create_subscription(
             Image,
@@ -96,6 +111,18 @@ class VisualLocalizer(Node):
             self.get_logger().info('Constructing sensor offset compensator...')
             self.sensor_offset_compensator = SensorOffsetCompensator(base_frame, sensor_frame, align_camera_frame)
 
+        loc_var = 0.1
+        loc_cov = 0.0
+        or_var = 0.1
+        or_cov = 0.0
+        self.vloc_estimate_covariance =    [loc_var,    loc_cov,    loc_cov,    0.0,    0.0,    0.0,
+                                            loc_cov,    loc_var,    loc_cov,    0.0,    0.0,    0.0,
+                                            loc_cov,    loc_cov,    loc_var,    0.0,    0.0,    0.0,
+                                            0.0,    0.0,    0.0,    or_var,    or_cov,    or_cov,
+                                            0.0,    0.0,    0.0,    or_cov,    or_var,    or_cov,
+                                            0.0,    0.0,    0.0,    or_cov,    or_cov,    or_var]
+        self.vloc_estimate_covariance = np.array(self.vloc_estimate_covariance)
+
     def camera_subscriber_callback(self, image_msg):
         '''
         Use the camera subscriber callback only for updating the image data
@@ -111,6 +138,8 @@ class VisualLocalizer(Node):
             image_msg = deepcopy(self.latest_image)
 
         if image_msg is not None:
+
+            computation_start_time = self.get_clock().now()
     
             # Convert your ROS Image message to OpenCV2
             cv2_img = self.cv_bridge.imgmsg_to_cv2(image_msg, "bgr8")
@@ -118,62 +147,85 @@ class VisualLocalizer(Node):
 
             ret = self.pose_estimator.estimate_pose(cv2_img, self.top_k)
 
-            timestamp = image_msg.header.stamp
-            pose_estimate_msg = self._construct_visual_pose_msg(ret, timestamp)
-
             if self.compensate_sensor_offset:
-                pr_poses = []
-                for pose_msg in pose_estimate_msg.place_recognition_poses:
-                    pr_poses.append( self.sensor_offset_compensator.remove_offset(pose_msg) )
-                pose_estimate_msg.place_recognition_poses = pr_poses
+                # Compute the pose of the vehicle the camera is attached to
+                for pose in ret['place_recognition']:
+                    pose['tvec'], pose['qvec'] = self.sensor_offset_compensator.remove_offset_from_array(pose['tvec'], pose['qvec'])
 
-                for pose_msg in pose_estimate_msg.pnp_estimates:
-                    pose_msg.pose = self.sensor_offset_compensator.remove_offset(pose_msg.pose)
+                for pose in ret['pnp_estimates']:
+                    if pose['success']:
+                        pose['tvec'], pose['qvec'] = self.sensor_offset_compensator.remove_offset_from_array(pose['tvec'], pose['qvec'])
+            
+            best_estimate, best_cluster_idx = self.choose_best_estimate(ret)
 
-            self.publisher.publish(pose_estimate_msg)
+            vloc_computation_delay = (self.get_clock().now()-computation_start_time)
+            visual_pose_estimate_msg = self._construct_visual_pose_msg(best_estimate, image_msg.header.stamp, vloc_computation_delay)
+            
+            self.vloc_publisher.publish(visual_pose_estimate_msg)
 
-    def _construct_visual_pose_msg(self, ret, timestamp):
+            if self.visualize_estimates:
+                self._estimate_visualizer(ret, image_msg.header.stamp, best_cluster_idx)
 
-        pr_poses = [ {'position': np2point_msg(pose['tvec']),
-                      'orientation': np2quat_msg(pose['qvec'])} 
-                      for pose in ret['place_recognition']]
 
-        pnp_estimates = []
-        for estimate in ret['pnp_estimates']:
-            estimate_msg_dict = {}
-            estimate_msg_dict['success'] = { 'data': estimate['success'] }
-            estimate_msg_dict['place_recognition_idx'] = [ {'data': idx} for idx in estimate['place_recognition_idx']]
+    def _construct_visual_pose_msg(self, best_estimate, timestamp, vloc_computation_delay):
 
-            if estimate['success']:
-                estimate_msg_dict['num_inliers'] = {'data': estimate['num_inliers']}
-                estimate_msg_dict['pose'] = {'position': np2point_msg(estimate['tvec']),
-                                             'orientation': np2quat_msg(estimate['qvec'])}
-            pnp_estimates.append(estimate_msg_dict)
+        if best_estimate is not None:
+            best_pose_msg = PoseWithCovariance(pose=Pose(position=np2point_msg(best_estimate['tvec']),
+                                                        orientation=np2quat_msg(best_estimate['qvec'])),
+                                                covariance = self.vloc_estimate_covariance)
+            pnp_success = Bool(data=True)
+        else:
+            best_pose_msg = PoseWithCovariance()
+            pnp_success = Bool(data=False)
 
-        pose_dict = {'header': { 'stamp': timestamp, 'frame_id': 'map'},
-                        'place_recognition_poses': pr_poses,
-                        'pnp_estimates': pnp_estimates
-                    }
+        visual_pose_estimate_msg = VisualPoseEstimate(header=Header(frame_id='map', stamp=timestamp),
+                                                    pnp_success = pnp_success,
+                                                    computation_delay=vloc_computation_delay.to_msg(),
+                                                    pose=best_pose_msg)
+        return visual_pose_estimate_msg
 
-        vpe_msg = VisualPoseEstimate()
-        set_message_fields(vpe_msg, pose_dict)
-        return vpe_msg
 
-    @staticmethod
-    def choose_best_estimate(visual_pose_estimate_msg):
+    def choose_best_estimate(self, visual_pose_estimates):
         # Choose the pose estimate based on the number of ransac inliers
         best_inliers = 0
         best_estimate = None
         best_idx = None
-        for i, estimate in enumerate(visual_pose_estimate_msg.pnp_estimates):
-            if estimate.num_inliers.data > best_inliers:
-                best_estimate = estimate.pose
-                best_idx = i
-
-        if best_estimate is None:
-            best_estimate = visual_pose_estimate_msg.place_recognition_poses[0]
+        for i, estimate in enumerate(visual_pose_estimates['pnp_estimates']):
+            if estimate['success']:
+                if estimate['num_inliers'] > best_inliers:
+                    best_inliers = estimate['num_inliers']
+                    best_estimate = estimate
+                    best_idx = i
 
         return best_estimate, best_idx
+
+
+    def _estimate_visualizer(self, ret, timestamp, best_pose_idx):
+        # Place recognition & PnP localization visualizations
+        header = Header(frame_id='map', stamp=timestamp)
+        marker = Marker(header=header, scale=Vector3(x=1.0,y=1.0,z=1.0), type=8, action=0, color=ColorRGBA(r=0.0, g=1.0, b=0.0, a=1.0))
+        poses = PoseArray(header=header, poses=[])
+        for i, estimate in enumerate(ret['pnp_estimates']):
+            if i == best_pose_idx:
+                color = self.colormap(0)
+            else:
+                color = self.colormap(i+1)
+            color = ColorRGBA(r=color[0], g=color[1], b=color[2], a=color[3])
+
+            place_recognition_idxs = estimate['place_recognition_idx']
+            for idx in place_recognition_idxs:
+                marker.colors.append(color)
+
+                place_reg_position = np2point_msg(ret['place_recognition'][idx]['tvec'])
+                marker.points.append(place_reg_position)
+
+            if estimate['success']:
+                pose_msg = Pose(position=np2point_msg(estimate['tvec']), orientation=np2quat_msg(estimate['qvec']))
+                poses.poses.append(pose_msg)
+
+        self.place_recognition_publisher.publish(marker)
+        self.pnp_estimate_publisher.publish(poses)
+
 
 def np2point_msg(np_point):
     msg_point = Point(x=np_point[0], 

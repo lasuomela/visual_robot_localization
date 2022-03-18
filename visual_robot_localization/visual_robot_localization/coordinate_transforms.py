@@ -113,6 +113,7 @@ class SensorOffsetCompensator:
                                                     time=rclpy.duration.Duration(seconds=0))
                 except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
                     rate.sleep()
+                    print("Didn't receive transform, retrying...")
                 wait += 1/tf_subscription_freq
 
 
@@ -180,10 +181,7 @@ class SensorOffsetCompensator:
         sensor_tvec = np.array([position.x, position.y, position.z])
         sensor_qvec = np.array([orientation.w, orientation.x, orientation.y, orientation.z])
 
-        base_world_rot = t3d.quaternions.qmult(sensor_qvec, t3d.quaternions.qinverse( self.qvec))
-        base_world_rot = base_world_rot/t3d.quaternions.qnorm(base_world_rot)
-        base_world_pos = sensor_tvec - t3d.quaternions.rotate_vector(self.tvec, base_world_rot)
-
+        base_world_pos, base_world_rot = self.remove_offset_from_array(sensor_tvec, sensor_qvec)
         base_pose_msg = Pose(position=Point(x=base_world_pos[0], y=base_world_pos[1], z=base_world_pos[2]),
                             orientation=Quaternion(w=base_world_rot[0], x=base_world_rot[1], y=base_world_rot[2], z=base_world_rot[3]))
 
@@ -191,4 +189,24 @@ class SensorOffsetCompensator:
             base_pose_msg = PoseStamped(header=sensor_pose_msg.header, pose=base_pose_msg)
  
         return base_pose_msg
+
+    def remove_offset_from_array(self, sensor_tvec, sensor_qvec):
+        '''
+        Prams:
+            sensor_tvec: Position of the sensor
+            type: np.array
+
+            sensor_qvec: Orientation of the sensor
+            type: np.array
+
+        Return:
+            base_world_pos: Position of the vehicle the sensor is attached to
+            base_world_rot: Orientation of the vehicle the sensor is attached to
+        '''
+
+        base_world_rot = t3d.quaternions.qmult(sensor_qvec, t3d.quaternions.qinverse( self.qvec))
+        base_world_rot = base_world_rot/t3d.quaternions.qnorm(base_world_rot)
+        base_world_pos = sensor_tvec - t3d.quaternions.rotate_vector(self.tvec, base_world_rot)
+
+        return base_world_pos, base_world_rot
 
