@@ -45,21 +45,6 @@ def colmap2ros_coord_transform(tvec_col, qvec_col):
     qvec_ros = np.array( [qinv[0], qinv[3], -qinv[1], -qinv[2] ])
     return tvec_ros, qvec_ros
 
-def compensate_sensor_offset(odometry_msg, sensor_pos, sensor_rot):
-    '''
-    Legacy, prefer the SensorOffsetCompensator class if possible
-    '''
-    frame_world_pos = point_msg2np( odometry_msg.pose.pose.position )
-    frame_world_rot = quat_msg2np( odometry_msg.pose.pose.orientation )
-
-    sensor_world_pos = frame_world_pos + t3d.quaternions.rotate_vector(sensor_pos, frame_world_rot)
-    sensor_world_rot = t3d.quaternions.qmult(frame_world_rot, sensor_rot)
-    sensor_world_rot = sensor_world_rot/t3d.quaternions.qnorm(sensor_world_rot)
-
-    sensor_odometry_msg = deepcopy(odometry_msg)
-    sensor_odometry_msg.pose.pose.position = np2point_msg(sensor_world_pos)
-    sensor_odometry_msg.pose.pose.orientation = np2quat_msg(sensor_world_rot)
-    return sensor_odometry_msg
 
 class SensorOffsetCompensator:
     '''
@@ -209,4 +194,20 @@ class SensorOffsetCompensator:
         base_world_pos = sensor_tvec - t3d.quaternions.rotate_vector(self.tvec, base_world_rot)
 
         return base_world_pos, base_world_rot
+        
 
+def compensate_sensor_offset(odometry_msg, sensor_pos, sensor_rot):
+    '''
+    Legacy, prefer the SensorOffsetCompensator class if possible
+    '''
+    frame_world_pos = point_msg2np( odometry_msg.pose.pose.position )
+    frame_world_rot = quat_msg2np( odometry_msg.pose.pose.orientation )
+
+    sensor_world_pos = frame_world_pos + t3d.quaternions.rotate_vector(sensor_pos, frame_world_rot)
+    sensor_world_rot = t3d.quaternions.qmult(frame_world_rot, sensor_rot)
+    sensor_world_rot = sensor_world_rot/t3d.quaternions.qnorm(sensor_world_rot)
+
+    sensor_odometry_msg = deepcopy(odometry_msg)
+    sensor_odometry_msg.pose.pose.position = np2point_msg(sensor_world_pos)
+    sensor_odometry_msg.pose.pose.orientation = np2quat_msg(sensor_world_rot)
+    return sensor_odometry_msg

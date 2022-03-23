@@ -15,6 +15,7 @@ from collections import defaultdict
 from pathlib import Path
 from ast import literal_eval
 
+
 class VisualPoseEstimator:
 
     def __init__(self,
@@ -117,16 +118,16 @@ class VisualPoseEstimator:
             } for pose in topk_gallery_poses]
 
         for cluster_ids in clusters:
-            cluster_idx = [ db_ids.index(id) for id in cluster_ids ]
+            cluster_idxs = [ db_ids.index(id) for id in cluster_ids ]
             if gallery_matches is not None:
-                cluster_matches = [gallery_matches[idx,:] for idx in cluster_idx]
+                cluster_matches = [gallery_matches[idx,:] for idx in cluster_idxs]
                 # PnP to estimate the 6DoF location of the query image
                 ret = self._pose_from_cluster_online(cluster_ids, cluster_matches, query_local_descriptors)
             else:
                 # If local feature matching failed
                 ret = {'success': False}
 
-            ret['place_recognition_idx'] = cluster_idx
+            ret['place_recognition_idx'] = cluster_idxs
 
             if ret['success']:
                 ret['tvec'], ret['qvec'] = colmap2ros_coord_transform(ret['tvec'], ret['qvec'])

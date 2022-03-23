@@ -62,15 +62,21 @@ class FeatureExtractor:
         if 'keypoints' in pred:
             size = np.array(data_dict['image'].shape[-2:][::-1])
             scales = (original_size / size).astype(np.float32)
+            scales = torch.tensor(scales[None], device=pred['keypoints'][0].device)
 
             # D2net returns keypoint tensor on cpu, should be fixed in hloc code (extractors/d2net.py)
-            pred['keypoints'] = (pred['keypoints'][0].to(self.device) + .5) * torch.tensor(scales[None]).to(self.device) - .5
+            pred['keypoints'] = (pred['keypoints'][0] + .5) * scales - .5
+
+            if pred['keypoints'].device != self.device:
+                pred['keypoints'] = pred['keypoints'].to(self.device)
 
         if 'scores' in pred:
             pred['scores'] = pred['scores'][0]
 
         if 'descriptors' in pred:
             pred['descriptors'] = pred['descriptors'][0]
+            if pred['descriptors'].device != self.device:
+                pred['descriptors'] = pred['descriptors'].to(self.device)
 
         if 'global_descriptor' in pred:
             if pred['global_descriptor'].is_cuda:
@@ -96,6 +102,9 @@ class FeatureMatcher:
         gallery_keypoints = [ desc['keypoints'] for desc in gallery_features ]
         gallery_scores = [ desc['scores'] for desc in gallery_features ]
 
+        # Store the original keypoint/descriptor counts to reverse the batch-padding
+        gallery_keypoint_counts = [ len(keypoints) for keypoints in gallery_keypoints ]
+
         # Zero-pad the gallery descriptors/keypoints/scores according to the feature with most keypoints
         data['descriptors1'] = pad_sequence(gallery_descriptors, batch_first=True).transpose(1,2)
         data['keypoints1'] = pad_sequence(gallery_keypoints, batch_first=True)
@@ -108,6 +117,7 @@ class FeatureMatcher:
         data['scores0'] = query_feature['scores'].unsqueeze(0).repeat(batch_size,1)
         data['image0'] = torch.empty((batch_size, 1, img_shape[0], img_shape[1]))
         data['image1'] = torch.empty((batch_size, 1, img_shape[0], img_shape[1]))
+        data['original_gallery_keypoint_counts'] = gallery_keypoint_counts
         return data
 
 
@@ -116,4 +126,9 @@ class FeatureMatcher:
         pred = self.model(data)
         matches = pred['matches0'].cpu().short().numpy()
         scores = pred['matching_scores0'].cpu().half().numpy()
+
+        for original_keypoint_count, pair_matches in zip(data['original_gallery_keypoint_counts'], matches):
+            # Discard any matches to the zero-keypoints introduced by zero-padding
+            pair_matches[ pair_matches > original_keypoint_count - 1] = -1
+
         return matches, scores

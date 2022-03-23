@@ -2,6 +2,9 @@ import rclpy
 from rclpy.node import Node
 from rclpy.executors import SingleThreadedExecutor
 from cv_bridge import CvBridge
+from rclpy.callback_groups import ReentrantCallbackGroup
+from rclpy.duration import Duration
+
 
 from std_msgs.msg import ColorRGBA, Header, Bool
 from sensor_msgs.msg import Image
@@ -16,6 +19,7 @@ from copy import deepcopy
 import threading
 import numpy as np
 from matplotlib import cm
+import time
 
 from visual_robot_localization.visual_6dof_localize import VisualPoseEstimator
 from visual_robot_localization.coordinate_transforms import SensorOffsetCompensator
@@ -92,7 +96,7 @@ class VisualLocalizer(Node):
             self.camera_subscriber_callback,
             10)
 
-        self.timer = self.create_timer( 1/self.pr_freq , self.computation_callback)
+        self.timer = self.create_timer( 1/self.pr_freq , self.computation_callback, callback_group = ReentrantCallbackGroup())
 
         self.lock = threading.Lock()
         self.latest_image = None
@@ -135,11 +139,10 @@ class VisualLocalizer(Node):
         Perform the heavy computation inside the timer callback
         '''
         with self.lock:
+            computation_start_time = time.time_ns()
             image_msg = deepcopy(self.latest_image)
 
         if image_msg is not None:
-
-            computation_start_time = self.get_clock().now()
     
             # Convert your ROS Image message to OpenCV2
             cv2_img = self.cv_bridge.imgmsg_to_cv2(image_msg, "bgr8")
@@ -158,8 +161,8 @@ class VisualLocalizer(Node):
             
             best_estimate, best_cluster_idx = self.choose_best_estimate(ret)
 
-            vloc_computation_delay = (self.get_clock().now()-computation_start_time)
-            visual_pose_estimate_msg = self._construct_visual_pose_msg(best_estimate, image_msg.header.stamp, vloc_computation_delay)
+            true_delay = Duration(nanoseconds = time.time_ns()-computation_start_time)
+            visual_pose_estimate_msg = self._construct_visual_pose_msg(best_estimate, image_msg.header.stamp, true_delay)
             
             self.vloc_publisher.publish(visual_pose_estimate_msg)
 
