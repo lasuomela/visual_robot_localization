@@ -22,5 +22,3 @@ touch "${TP_LIB}/r2d2/__init__.py"
 touch "${TP_LIB}/r2d2/tools/__init__.py"
 touch "${TP_LIB}/r2d2/nets/__init__.py"
 touch "${TP_LIB}/r2d2/models/__init__.py"
-
-pip3 install -r $CWD/Hierarchical-Localization/requirements.txt
