@@ -55,7 +55,7 @@ If `compensate_sensor_offset` is set to True, the node will wait to acquire a co
 To test that the node can succesfully receive and process images, run 
 
 ```sh
-launch_testing /opt/visual_robot_localization/src/visual_robot_localization/test/visual_pose_estimator_test.launch.py
+launch_test /opt/visual_robot_localization/src/visual_robot_localization/test/visual_pose_estimator_test.launch.py
 ```
 
 The test sends the visual pose estimator node one image from `example_dir` which the node localizes against the 3D model built by `do_SfM.sh`. If the localization is successful, the test will give an OK and show one visual pose estimate ROS message 
