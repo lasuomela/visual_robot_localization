@@ -97,8 +97,7 @@ def main(img_dir,
         img_dir,
         place_reg_pair_path,
         feature_path,
-        sfm_match_path,
-        colmap_path='colmap')  # change if COLMAP is not in your PATH
+        sfm_match_path)
 
 
 def parse_arguments():

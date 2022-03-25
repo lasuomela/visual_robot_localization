@@ -1,4 +1,3 @@
-from hloc.utils.read_write_model import read_model
 from hloc.localize_sfm import do_covisibility_clustering
 from visual_robot_localization.place_recognition_querier import PlaceRecognitionQuerier
 from visual_robot_localization.coordinate_transforms import colmap2ros_coord_transform
@@ -47,17 +46,11 @@ class VisualPoseEstimator:
         self.local_matcher = FeatureMatcher(matcher_confs[local_matcher_name])
 
         # Load the prebuilt colmap 3D pointcloud
-        cam_params, self.db_images, self.points3D = read_model(reference_sfm_path)
-
-        self.cfg = {
-        'model': cam_params[1].model,
-        'width': cam_params[1].width,
-        'height': cam_params[1].height,
-        'params': cam_params[1].params,
-        }
+        self.reconstruction = pycolmap.Reconstruction(reference_sfm_path)
+        self.query_camera = self.reconstruction.cameras[1]
 
         self.ransac_thresh = ransac_thresh
-        self.db_name_to_id = {image.name: i for i, image in self.db_images.items()}
+        self.db_name_to_id = {image.name: i for i, image in self.reconstruction.images.items()}
 
     def estimate_pose(self, query_img, topk, covisibility_clustering = True, exclude_best_match = False):
 
@@ -100,7 +93,8 @@ class VisualPoseEstimator:
 
         if covisibility_clustering:
             # Logic to partition the top k gallery images into distinct clusters by feature covisibility
-            clusters = do_covisibility_clustering(db_ids, self.db_images, self.points3D)
+            clusters = do_covisibility_clustering(db_ids, self.reconstruction)
+
         else:
             # A single cluster with all of the images retrieved by place recognition
             clusters = [db_ids]
@@ -148,7 +142,13 @@ class VisualPoseEstimator:
 
         for i, db_id in enumerate(db_ids):
             matches = query_matches[i]
-            points3D_ids = self.db_images[db_id].point3D_ids
+
+            image = self.reconstruction.images[db_id]
+            if image.num_points3D() == 0:
+                print('No 3D points found for image {image.name}')
+                continue
+            points3D_ids = np.array([p.point3D_id if p.has_point3D() else -1
+                                    for p in image.points2D])
             
             valid = np.where(matches > -1)[0]
             valid = valid[points3D_ids[matches[valid]] != -1]
@@ -166,9 +166,9 @@ class VisualPoseEstimator:
         mkpq += 0.5  # COLMAP coordinates
 
         mp3d_ids = [j for i in idxs for j in kp_idx_to_3D[i]]
-        mp3d = [self.points3D[j].xyz for j in mp3d_ids]
+        mp3d = [self.reconstruction.points3D[j].xyz for j in mp3d_ids]
         mp3d = np.array(mp3d).reshape(-1, 3)
 
         # Pycolmap pose estimation
-        ret = pycolmap.absolute_pose_estimation(mkpq.cpu().numpy(), mp3d, self.cfg, self.ransac_thresh)
+        ret = pycolmap.absolute_pose_estimation(mkpq.cpu().numpy(), mp3d, self.query_camera, max_error_px = self.ransac_thresh)
         return ret
