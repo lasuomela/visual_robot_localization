@@ -3,7 +3,7 @@ SCRIPT=$(readlink -f "$0")
 CWD=$(dirname "$SCRIPT")
 
 IMAGE_DB_ROOT=$CWD/../test/example_dir/
-GLOBAL_EXTRACTOR='dir' #'netvlad'
+GLOBAL_EXTRACTOR='netvlad'
 LOCAL_EXTRACTOR='superpoint_aachen'
 LOCAL_MATCHER='superglue'
 N_MATCHES=4 # try with 25
