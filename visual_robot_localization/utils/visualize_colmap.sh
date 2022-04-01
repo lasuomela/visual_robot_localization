@@ -2,15 +2,35 @@
 SCRIPT=$(readlink -f "$0")
 CWD=$(dirname "$SCRIPT")
 
-# Point this to the directory which contains your gallery images
+# Default value for directory which contains your gallery images
 image_folder=$CWD/../test/example_dir/
 
-# Check the name of the directory that contains the output of do_SfM.sh
-localization_method_name=netvlad+superpoint_aachen+superglue
+# Default value for the localization method
+localization_combination_name=netvlad+superpoint_aachen+superglue
 
-model_path=$image_folder/outputs/$localization_method_name/
+# Parse the image folder and localization method CLI args if given
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --image_folder)
+      image_folder="$2"
+      ;;
+    --localization_combination_name)
+      localization_combination_name="$2"
+      ;;
+    *)
+      printf "***************************\n"
+      printf "* Error: Invalid argument.*\n"
+      printf "***************************\n"
+      exit 1
+  esac
+  shift
+  shift
+done
+
+
+model_path=$image_folder/outputs/$localization_combination_name/
 db_path=$model_path/database.db
-sfm_path=$model_path/sfm_$localization_method_name/
+sfm_path=$model_path/sfm_$localization_combination_name/
 
 colmap gui \
     --database_path $db_path \
