@@ -1,6 +1,3 @@
 [submodule "third_party/colmap/colmap"]
 	path = third_party/colmap/colmap
 	url = git@github.com:colmap/colmap.git
-[submodule "third_party/hloc/Hierarchical-Localization"]
-	path = third_party/hloc/Hierarchical-Localization
-	url = git@github.com:lasuomela/Hierarchical-Localization.git
