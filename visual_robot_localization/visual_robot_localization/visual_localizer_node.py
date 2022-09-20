@@ -24,6 +24,8 @@ import time
 from visual_robot_localization.visual_6dof_localize import VisualPoseEstimator
 from visual_robot_localization.coordinate_transforms import SensorOffsetCompensator
 
+from carla_ros_scenario_runner_types.msg import CarlaScenarioRunnerStatus
+
 class VisualLocalizer(Node):
     def __init__(self):
         super().__init__('visual_localization_node')
@@ -114,6 +116,14 @@ class VisualLocalizer(Node):
         if self.compensate_sensor_offset:
             self.get_logger().info('Constructing sensor offset compensator...')
             self.sensor_offset_compensator = SensorOffsetCompensator(base_frame, sensor_frame, align_camera_frame)
+
+            if not hasattr(self.sensor_offset_compensator.tvec, '__len__') and not hasattr(self.sensor_offset_compensator.qvec, '__len__'):
+                self.scenario_runner_publisher = self.create_publisher(CarlaScenarioRunnerStatus,
+                                                                       "/scenario_runner/status",
+                                                                       10)
+                msg = CarlaScenarioRunnerStatus()
+                msg.status = 4
+                self.scenario_runner_publisher.publish(msg)
 
         loc_var = 0.1
         loc_cov = 0.0
@@ -246,9 +256,8 @@ def np2quat_msg(np_quat):
 def main(args=None):
 
     rclpy.init(args=args)
-
+    localizer = VisualLocalizer()
     try:
-        localizer = VisualLocalizer()
         executor = SingleThreadedExecutor()
         executor.add_node(localizer)
         executor.spin()
