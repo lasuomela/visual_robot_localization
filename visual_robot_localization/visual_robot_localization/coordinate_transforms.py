@@ -8,6 +8,8 @@ import tf2_ros
 
 from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
 
+import psutil
+
 def ros2colmap_coord_transform(tx_r, ty_r, tz_r, qw_r, qx_r, qy_r, qz_r):
 
     '''
@@ -90,14 +92,16 @@ class SensorOffsetCompensator:
         print('Waiting to acquire transform {} -> {} from tf2...'.format(frame_id, child_frame_id))
         while rclpy.ok() & (transform is None):
             if wait > tf_wait_timeout:
-                raise Exception('Transform {} -> {} not received!'.format(frame_id, child_frame_id))
+                print(f'Transform {frame_id} -> {child_frame_id} not received!')
+                return None, None
+                #raise Exception('Transform {} -> {} not received!'.format(frame_id, child_frame_id))
             else:
                 try:
                     transform = tfBuffer.lookup_transform( target_frame=frame_id,
                                                     source_frame=child_frame_id,
                                                     time=rclpy.duration.Duration(seconds=0))
                 except (tf2_ros.LookupException, tf2_ros.ConnectivityException, tf2_ros.ExtrapolationException):
-                    rate.sleep()
+                    #rate.sleep()
                     print("Didn't receive transform, retrying...")
                 wait += 1/tf_subscription_freq
 
