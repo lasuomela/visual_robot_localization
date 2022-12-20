@@ -13,6 +13,8 @@ from visualization_msgs.msg import Marker
 
 
 from visual_localization_interfaces.msg import VisualPoseEstimate
+from visual_localization_interfaces.msg import VisualLocalizerStatus
+
 
 import cv2
 from copy import deepcopy
@@ -23,8 +25,6 @@ import time
 
 from visual_robot_localization.visual_6dof_localize import VisualPoseEstimator
 from visual_robot_localization.coordinate_transforms import SensorOffsetCompensator
-
-from carla_ros_scenario_runner_types.msg import CarlaScenarioRunnerStatus
 
 class VisualLocalizer(Node):
     def __init__(self):
@@ -118,8 +118,8 @@ class VisualLocalizer(Node):
             self.sensor_offset_compensator = SensorOffsetCompensator(base_frame, sensor_frame, align_camera_frame)
 
             if not hasattr(self.sensor_offset_compensator.tvec, '__len__') and not hasattr(self.sensor_offset_compensator.qvec, '__len__'):
-                self.scenario_runner_publisher = self.create_publisher(CarlaScenarioRunnerStatus,
-                                                                       "/scenario_runner/status",
+                self.scenario_runner_publisher = self.create_publisher(VisualLocalizerStatus,
+                                                                       "/visual_localizer/status",
                                                                        10)
                 msg = CarlaScenarioRunnerStatus()
                 msg.status = 4

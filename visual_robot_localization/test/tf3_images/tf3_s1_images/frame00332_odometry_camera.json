@@ -1,0 +1,1 @@
+{"header": {"stamp": {"sec": 1622048179, "nanosec": 195481}, "frame_id": "map"}, "child_frame_id": "camera", "pose": {"pose": {"position": {"x": 18.360102, "y": 14.899791, "z": -0.976984}, "orientation": {"x": 0.004487, "y": 0.014078, "z": -0.554465, "w": 0.832076}}}}

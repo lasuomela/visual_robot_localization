@@ -8,7 +8,6 @@ import tf2_ros
 
 from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
 
-import psutil
 
 def ros2colmap_coord_transform(tx_r, ty_r, tz_r, qw_r, qx_r, qy_r, qz_r):
 
@@ -66,7 +65,7 @@ class SensorOffsetCompensator:
         '''
 
         tf_subscription_freq = 10
-        tf_wait_timeout = 5
+        tf_wait_timeout = 300 # Set to high value to avoid hard-t-find bugs when running with carla
         self.camera_frame_alignment_qvec = np.array([ 0.5, 0.5, -0.5, 0.5])
         self.tvec, self.qvec = self._get_transform(base_frame_name, sensor_frame_name, tf_subscription_freq, tf_wait_timeout, align_camera_frame)
 

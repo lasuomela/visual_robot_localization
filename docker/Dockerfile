@@ -29,7 +29,7 @@ RUN /bin/bash -c "chmod +x install_additional_dependencies.sh; \
 RUN /bin/bash -c "	cd colmap; \
 			mkdir build; \
 			cd build; \
-			cmake ..; \
+			cmake .. -DCUDA_NVCC_FLAGS='--std c++14'; \
 			make -j; \
 			sudo make install"
 		  

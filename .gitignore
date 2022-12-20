@@ -1,5 +1,7 @@
+# Data dir
+/image-gallery/
 
-#ROS colcon build folders
+# ROS colcon build folders
 *build/*
 *install/*
 *log/*

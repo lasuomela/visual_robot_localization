@@ -6,7 +6,7 @@ CWD=$(dirname "$SCRIPT")
 IMAGE_DB_ROOT=$CWD/../test/example_dir/
 GLOBAL_EXTRACTOR='netvlad'
 LOCAL_EXTRACTOR='superpoint_aachen'
-LOCAL_MATCHER='superglue'
+LOCAL_MATCHER='superglue' 
 
 N_MATCHES=4 # try with 25
 IM_SIZE_X=800
