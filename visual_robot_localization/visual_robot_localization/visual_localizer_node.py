@@ -118,12 +118,12 @@ class VisualLocalizer(Node):
             self.sensor_offset_compensator = SensorOffsetCompensator(base_frame, sensor_frame, align_camera_frame)
 
             if not hasattr(self.sensor_offset_compensator.tvec, '__len__') and not hasattr(self.sensor_offset_compensator.qvec, '__len__'):
-                self.scenario_runner_publisher = self.create_publisher(VisualLocalizerStatus,
-                                                                       "/visual_localizer/status",
-                                                                       10)
-                msg = CarlaScenarioRunnerStatus()
+                self.status_publisher = self.create_publisher(VisualLocalizerStatus,
+                                                                        "/visual_localizer/status",
+                                                                        10)
+                msg = VisualLocalizerStatus()
                 msg.status = 4
-                self.scenario_runner_publisher.publish(msg)
+                self.status_publisher.publish(msg)
 
         loc_var = 0.1
         loc_cov = 0.0

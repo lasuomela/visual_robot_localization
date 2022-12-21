@@ -3,6 +3,8 @@ ARG BASE_IMAGE
 FROM nvidia/cuda:11.2.0-cudnn8-devel-ubuntu20.04 as cuda
 FROM $BASE_IMAGE
 
+RUN /bin/bash -c "apt-get -y dist-upgrade"
+
 # Add cuda&cudnn libraries
 COPY --from=cuda /usr/local/cuda /usr/local/cuda
 COPY --from=cuda /usr/lib/x86_64-linux-gnu/*libcudnn* /usr/lib/x86_64-linux-gnu/
