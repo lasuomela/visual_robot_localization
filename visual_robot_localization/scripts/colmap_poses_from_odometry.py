@@ -6,9 +6,7 @@ from distutils.util import strtobool
 from pathlib import Path
 import re
 
-import sys
-sys.path.append('/opt/third_party/colmap/colmap/scripts/python')
-import read_write_model as rw
+import hloc.utils.read_write_model as rw
 
 from visual_robot_localization.coordinate_transforms import ros2colmap_coord_transform
 

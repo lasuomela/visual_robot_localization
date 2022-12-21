@@ -20,18 +20,6 @@ COPY . /opt/visual_robot_localization/src
 WORKDIR /opt/visual_robot_localization/src
 RUN /bin/bash -c "chmod +x install_dependencies.sh; \
 		  ./install_dependencies.sh"
-		 
-# COLMAP and dependencies
-COPY ./third_party/colmap /opt/third_party/colmap
-WORKDIR /opt/third_party/colmap
-RUN /bin/bash -c "chmod +x install_additional_dependencies.sh; \
-		   bash install_additional_dependencies.sh"	   
-RUN /bin/bash -c "	cd colmap; \
-			mkdir build; \
-			cd build; \
-			cmake .. -DCUDA_NVCC_FLAGS='--std c++14'; \
-			make -j; \
-			sudo make install"
 		  
 WORKDIR /opt/visual_robot_localization/src/third_party/hloc
 RUN /bin/bash -c "chmod +x install_additional_dependencies.sh; \
