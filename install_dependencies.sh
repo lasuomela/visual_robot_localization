@@ -9,7 +9,7 @@ apt-get update && apt-get install -y \
         python3-pip \
         python3-opencv \
         ros-$ROS_DISTRO-cv-bridge \
-	colmap=3.6+dev2+git20191105-1build1 \ # Install regular colmap to enable visualization
+	colmap=3.6+dev2+git20191105-1build1 \
 	libceres-dev \
 	wget
 
