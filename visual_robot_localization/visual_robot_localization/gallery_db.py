@@ -22,12 +22,16 @@ class HlocPlaceRecognitionDBHandler:
             img_attrs = self.gallery_db[img_name]
             img_descriptor = img_attrs['global_descriptor']
 
-            odometry_path = str(odometry_dir_path / Path(img_name).stem) + odometry_suffix
-            with open(odometry_path, 'r') as f:
-                odometry = f.read()
-
             img_paths.append(str(odometry_dir_path / Path(img_name)))
             descriptors.append(img_descriptor)
+
+            odometry_path = str(odometry_dir_path / Path(img_name).stem) + odometry_suffix
+            try:
+                with open(odometry_path, 'r') as f:
+                    odometry = f.read()
+            except FileNotFoundError:
+                odometry = None
+                print('No odometry found for {}'.format(str(Path(img_name).stem) + odometry_suffix))
             odometries.append(odometry)
 
         self.img_paths = np.array(img_paths)

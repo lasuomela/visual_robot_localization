@@ -36,3 +36,30 @@ class PlaceRecognitionQuerier:
 
         return ksmallest_filenames, ksmallest_dist, ksmallest_odometries
 
+    def match_dot(self, img, k):
+        if k > self.db_handler.gallery_len:
+            raise ValueError('Specified value of k ({}) exceeds size of gallery ({})'.format(k, self.db_handler.gallery_len))
+
+        query_ret = self.extractor(img)
+
+        dist = 1/np.dot(self.db_handler.get_descriptors(), query_ret['global_descriptor'].numpy().squeeze())
+
+        if k < len(dist):
+            idx_part = np.argpartition(dist, k)[:(k)]
+        else:
+            idx_part = np.arange(k)
+
+        idx_partsort = np.argsort(dist[idx_part])
+        idx_ksmallest = idx_part[idx_partsort]
+
+        ksmallest_dist = dist[idx_ksmallest]
+        ksmallest_filenames = []
+        ksmallest_odometries = []
+
+        for idx in idx_ksmallest:
+            filename, _, odometry = self.db_handler.get_by_idx(idx)
+            ksmallest_filenames.append(filename)
+            ksmallest_odometries.append(odometry)
+
+        return ksmallest_filenames, ksmallest_dist, ksmallest_odometries
+
