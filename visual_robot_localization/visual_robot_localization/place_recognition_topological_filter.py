@@ -2,6 +2,7 @@ import os
 import numpy as np
 import argparse
 import time
+import scipy
 
 import matplotlib.pyplot as plt
 
@@ -50,6 +51,7 @@ class PlaceRecognitionTopologicalFilter:
         vsim = np.exp(
             -self.lambda1 * np.sqrt(2 - 2 * np.dot(self.descriptors, descriptor))
         )
+        print(np.argmax(np.dot(self.descriptors, descriptor)))
         
         return vsim
 
@@ -64,25 +66,35 @@ class PlaceRecognitionTopologicalFilter:
             conv_ind_l, conv_ind_h = 0, len(self.belief) - w_l
             bel_ind_l, bel_ind_h = w_l, len(self.belief)
 
-        # apply prior transition matrix
-        self.belief[bel_ind_l:bel_ind_h] = np.convolve(self.belief, self.transition)[
+        # apply prior transition matrix as a convolution
+        # first add symmetric padding to remove edge effects
+        # (without padding and mode='full' the first and last node never reach high values)
+        belief_pad = np.pad(self.belief, len(self.transition)-1, mode='symmetric')
+        conv = np.convolve( belief_pad, self.transition, mode='valid')
+
+        self.belief[bel_ind_l:bel_ind_h] = conv[
             conv_ind_l:conv_ind_h
         ]
+
         if w_l > 0:
             self.belief[:w_l] = 0.0
 
         # observation likelihood update
-        self.belief *= self.obs_lhood(query_desc)
+        obs_lhood = self.obs_lhood(query_desc)
+        self.belief *= obs_lhood
         self.belief /= self.belief.sum()
 
         # Argmax of the belief
         max_bel = np.argmax(self.belief)
+        print('max_bel ',max_bel)
+        print(self.belief[-3:])
 
         nhood_inds = np.arange(
             max(max_bel - 2 * self.window_size, 0),
             min(max_bel + 2 * self.window_size, len(self.belief) - 1),
         )
         score = np.sum(self.belief[nhood_inds])
-        proposal = int(np.rint(np.average(nhood_inds, weights=self.belief[nhood_inds])))
+        # proposal = int(np.rint(np.average(nhood_inds, weights=self.belief[nhood_inds])))
+        proposal = max_bel
         
         return proposal, score

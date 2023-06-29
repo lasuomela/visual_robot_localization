@@ -10,7 +10,7 @@ from hloc.utils.base_model import dynamic_load
 
 class FeatureExtractor:
 
-    def __init__(self, conf):
+    def __init__(self, conf, device = 'cuda'):
         self.prep_conf = conf['preprocessing']
 
         if not 'resize_force' in self.prep_conf:
@@ -19,7 +19,8 @@ class FeatureExtractor:
         if not 'grayscale' in self.prep_conf:
             self.prep_conf['grayscale'] = False
 
-        self.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        self.device = 'cuda' if (device == 'cuda' and torch.cuda.is_available()) else 'cpu'
+        print('Feature extractor: Using device {}'.format(self.device))
         Model = dynamic_load(extractors, conf['model']['name'])
         self.model = Model(conf['model'])
         if hasattr(self.model, 'eval'):
