@@ -7,6 +7,20 @@ A ROS2 package for hierarchical visual localization.
   <br /><em>An agent running ROS2 can acquire its 6DoF pose using hierarchical visual localization</em>
 </p>
 
+## Citing
+
+If you find this repository useful in your research, please cite our work as:
+```
+@InProceedings{Suomela_2023_WACV,
+    author    = {Suomela, Lauri and Kalliola, Jussi and Dag, Atakan and Edelman, Harry and Kämäräinen, Joni-Kristian},
+    title     = {Benchmarking Visual Localization for Autonomous Navigation},
+    booktitle = {Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision (WACV)},
+    month     = {January},
+    year      = {2023},
+    pages     = {2945-2955}
+}
+```
+
 ## Install
 
 Pull the repository:
