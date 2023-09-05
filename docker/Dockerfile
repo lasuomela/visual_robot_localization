@@ -1,6 +1,6 @@
 ARG ROS_DISTRO
 ARG BASE_IMAGE
-FROM nvidia/cuda:11.3.0-cudnn8-devel-ubuntu20.04 as cuda
+FROM nvidia/cuda:11.3.1-cudnn8-devel-ubuntu20.04 as cuda
 FROM $BASE_IMAGE
 
 RUN /bin/bash -c "apt-get update && apt-get -y dist-upgrade"

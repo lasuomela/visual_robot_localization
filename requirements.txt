@@ -3,4 +3,6 @@ scipy
 torch==1.12.1+cu113
 torchvision==0.13.1+cu113
 numpy==1.21
-sklearn
+scikit-learn
+matplotlib
+opencv-python
